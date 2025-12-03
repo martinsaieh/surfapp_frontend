@@ -720,6 +720,224 @@ class SupabaseApiClient {
     }
   }
 
+  // ============ MENSAJERÍA ============
+
+  async getConversations(userId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(
+          `
+          *,
+          session:sessions(id, spot, date),
+          surfer:users!conversations_surfer_id_fkey(id, name, avatar_url),
+          photographer:users!conversations_photographer_id_fkey(id, name, avatar_url)
+        `
+        )
+        .or(`surfer_id.eq.${userId},photographer_id.eq.${userId}`)
+        .order('last_message_at', { ascending: false });
+
+      if (error) {
+        throw this.createError(error.message, 'FETCH_ERROR');
+      }
+
+      const conversationsWithLastMessage = await Promise.all(
+        (data || []).map(async (conv: any) => {
+          const { data: lastMsg } = await supabase
+            .from('messages')
+            .select('message, created_at')
+            .eq('conversation_id', conv.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', conv.id)
+            .eq('is_read', false)
+            .neq('sender_id', userId);
+
+          const isUserSurfer = conv.surfer_id === userId;
+          const otherUser = isUserSurfer ? conv.photographer : conv.surfer;
+
+          return {
+            id: conv.id,
+            session_id: conv.session_id,
+            session: conv.session,
+            surfer_id: conv.surfer_id,
+            surfer_name: conv.surfer.name,
+            surfer_avatar: conv.surfer.avatar_url,
+            photographer_id: conv.photographer_id,
+            photographer_name: conv.photographer.name,
+            photographer_avatar: conv.photographer.avatar_url,
+            other_user_id: otherUser.id,
+            other_user_name: otherUser.name,
+            other_user_avatar: otherUser.avatar_url,
+            last_message: lastMsg?.message,
+            last_message_at: conv.last_message_at,
+            unread_count: unreadCount || 0,
+            created_at: conv.created_at,
+          };
+        })
+      );
+
+      return conversationsWithLastMessage;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getOrCreateConversation(
+    surferId: string,
+    photographerId: string,
+    sessionId?: string
+  ): Promise<string> {
+    try {
+      let query = supabase
+        .from('conversations')
+        .select('id')
+        .eq('surfer_id', surferId)
+        .eq('photographer_id', photographerId);
+
+      if (sessionId) {
+        query = query.eq('session_id', sessionId);
+      } else {
+        query = query.is('session_id', null);
+      }
+
+      const { data: existing, error: fetchError } = await query.maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw this.createError(fetchError.message, 'FETCH_ERROR');
+      }
+
+      if (existing) {
+        return existing.id;
+      }
+
+      const insertData: any = {
+        surfer_id: surferId,
+        photographer_id: photographerId,
+      };
+
+      if (sessionId) {
+        insertData.session_id = sessionId;
+      }
+
+      const { data: newConv, error: createError } = await supabase
+        .from('conversations')
+        .insert(insertData)
+        .select('id')
+        .single();
+
+      if (createError) {
+        throw this.createError(createError.message, 'CREATE_ERROR');
+      }
+
+      return newConv.id;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getMessages(conversationId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(
+          `
+          *,
+          sender:users!messages_sender_id_fkey(name, avatar_url)
+        `
+        )
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw this.createError(error.message, 'FETCH_ERROR');
+      }
+
+      return (data || []).map((msg: any) => ({
+        id: msg.id,
+        conversation_id: msg.conversation_id,
+        sender_id: msg.sender_id,
+        sender_name: msg.sender.name,
+        sender_avatar: msg.sender.avatar_url,
+        message: msg.message,
+        is_read: msg.is_read,
+        created_at: msg.created_at,
+      }));
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async sendMessage(
+    conversationId: string,
+    senderId: string,
+    message: string
+  ): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: senderId,
+          message,
+        })
+        .select(
+          `
+          *,
+          sender:users!messages_sender_id_fkey(name, avatar_url)
+        `
+        )
+        .single();
+
+      if (error) {
+        throw this.createError(error.message, 'CREATE_ERROR');
+      }
+
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+      return {
+        id: data.id,
+        conversation_id: data.conversation_id,
+        sender_id: data.sender_id,
+        sender_name: data.sender.name,
+        sender_avatar: data.sender.avatar_url,
+        message: data.message,
+        is_read: data.is_read,
+        created_at: data.created_at,
+      };
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async markMessagesAsRead(
+    conversationId: string,
+    userId: string
+  ): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', userId)
+        .eq('is_read', false);
+
+      if (error) {
+        throw this.createError(error.message, 'UPDATE_ERROR');
+      }
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
   // ============ SUBIDA DE ARCHIVOS ============
 
   async getPresignedUploadUrl(

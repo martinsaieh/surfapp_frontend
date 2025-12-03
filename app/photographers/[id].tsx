@@ -24,7 +24,9 @@ import {
   DollarSign,
   Award,
   Calendar,
+  MessageCircle,
 } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api-supabase';
 import { Photographer, CreateBookingRequest } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
@@ -35,6 +37,7 @@ const { width } = Dimensions.get('window');
 
 export default function PhotographerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [photographer, setPhotographer] = useState<Photographer | null>(null);
@@ -125,6 +128,20 @@ export default function PhotographerDetailScreen() {
       Alert.alert('Error', err.message || 'No se pudo crear la reserva');
     } finally {
       setIsBooking(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!photographer || !user) return;
+
+    try {
+      const conversationId = await api.getOrCreateConversation(
+        user.id,
+        photographer.id
+      );
+      router.push(`/(tabs)/messages/${conversationId}` as any);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo abrir el chat');
     }
   };
 
@@ -270,13 +287,20 @@ export default function PhotographerDetailScreen() {
               </Text>
             </View>
           </View>
-          <Button
-            title="Reservar Sesión"
-            onPress={handleBooking}
-            loading={isBooking}
-            disabled={isBooking || !photographer.available}
-            style={styles.bookButton}
-          />
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.messageButton}
+              onPress={handleSendMessage}>
+              <MessageCircle size={20} color="#007AFF" />
+            </TouchableOpacity>
+            <Button
+              title="Reservar Sesión"
+              onPress={handleBooking}
+              loading={isBooking}
+              disabled={isBooking || !photographer.available}
+              style={styles.bookButton}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -448,6 +472,22 @@ const styles = StyleSheet.create({
   priceInfo: {
     marginBottom: 16,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  messageButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookButton: {
+    flex: 1,
+  },
   priceLabel: {
     fontSize: 14,
     color: '#8E8E93',
@@ -462,8 +502,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#007AFF',
     marginLeft: 4,
-  },
-  bookButton: {
-    width: '100%',
   },
 });

@@ -141,6 +141,33 @@ export interface StorageUsage {
   plan: string;
 }
 
+// Mensajería
+export interface Conversation {
+  id: string;
+  session_id?: string;
+  session?: Session;
+  surfer_id: string;
+  surfer_name: string;
+  surfer_avatar?: string;
+  photographer_id: string;
+  photographer_name: string;
+  photographer_avatar?: string;
+  last_message?: string;
+  last_message_at: string;
+  unread_count?: number;
+  created_at: string;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  sender_name: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 // Bitácora
 export interface LogEntry {
   id: string;

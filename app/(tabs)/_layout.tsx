@@ -3,7 +3,7 @@
  */
 
 import { Tabs } from 'expo-router';
-import { Home, Calendar, User } from 'lucide-react-native';
+import { Home, Calendar, MessageCircle, User } from 'lucide-react-native';
 
 export default function TabsLayout() {
   return (
@@ -38,6 +38,15 @@ export default function TabsLayout() {
           title: 'Sesiones',
           tabBarIcon: ({ size, color }) => (
             <Calendar size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Mensajes',
+          tabBarIcon: ({ size, color }) => (
+            <MessageCircle size={size} color={color} />
           ),
         }}
       />

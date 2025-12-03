@@ -30,9 +30,9 @@ export function MediaGrid({
   const screenWidth = Dimensions.get('window').width;
   const spacing = 12;
   const containerPadding = 16;
-  const cardPadding = 8;
-  const totalPadding = containerPadding * 2 + cardPadding * 2;
-  const itemSize = (screenWidth - totalPadding - spacing * (columns - 1)) / columns;
+  const cardPadding = 16;
+  const totalHorizontalPadding = containerPadding * 2 + cardPadding * 2;
+  const itemSize = (screenWidth - totalHorizontalPadding - spacing) / columns;
 
   const renderItem = ({ item, index }: { item: Media; index: number }) => {
     return (
@@ -92,11 +92,20 @@ export function MediaGrid({
 
   return (
     <View style={styles.gridContainer}>
-      {media.map((item, index) => (
-        <View key={item.id} style={{ width: itemSize, marginBottom: 12 }}>
-          {renderItem({ item, index })}
-        </View>
-      ))}
+      {media.map((item, index) => {
+        const isLeftColumn = index % 2 === 0;
+        return (
+          <View
+            key={item.id}
+            style={{
+              width: itemSize,
+              marginBottom: 12,
+              marginRight: isLeftColumn ? spacing : 0,
+            }}>
+            {renderItem({ item, index })}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -109,8 +118,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    padding: 8,
+    padding: 16,
   },
   row: {
     gap: 12,
