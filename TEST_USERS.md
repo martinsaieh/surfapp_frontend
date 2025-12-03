@@ -117,11 +117,21 @@ Password: password123
 ```
 
 **Flujo de prueba**:
-1. Iniciar sesión
-2. Ver su propio perfil como fotógrafa en Home
-3. Ver sus sesiones programadas
-4. Ver detalles de perfil
-5. Explorar otras funcionalidades
+1. Iniciar sesión (serás redirigido automáticamente a tu panel de fotógrafo)
+2. **Tab Servicios**: Crear paquetes personalizados (Básico, Premium, Platino)
+   - Agregar nombre, descripción, precio, duración
+   - Agregar características incluidas
+   - Editar o eliminar servicios existentes
+3. **Tab Horarios**: Configurar disponibilidad
+   - Seleccionar días de la semana
+   - Elegir franjas horarias disponibles
+   - Guardar horarios
+4. **Tab Solicitudes**: Gestionar reservas de surfers
+   - Ver solicitudes pendientes, confirmadas y canceladas
+   - Confirmar o rechazar reservas
+   - Filtrar por estado
+5. **Tab Mensajes**: Comunicarse con surfers
+6. **Tab Perfil**: Ver y editar información personal
 
 ---
 
@@ -135,6 +145,10 @@ Password: password123
 - ✅ `sessions` - Sesiones de surf
 - ✅ `media` - Fotos y videos
 - ✅ `logs` - Bitácora de actividad
+- ✅ `conversations` - Conversaciones entre usuarios
+- ✅ `messages` - Mensajes en conversaciones
+- ✅ `photographer_services` - Servicios ofrecidos por fotógrafos (Nuevo)
+- ✅ `photographer_schedules` - Horarios disponibles de fotógrafos (Nuevo)
 
 ### Políticas RLS
 
