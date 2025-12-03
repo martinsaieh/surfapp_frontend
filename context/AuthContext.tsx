@@ -60,24 +60,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = await authStorage.getToken();
       const savedUser = await authStorage.getUser();
 
+      console.log('📱 Loading session:', { hasToken: !!token, hasUser: !!savedUser, user: savedUser });
+
       if (token && savedUser) {
         api.setToken(token);
         api.setCurrentUser(savedUser);
         setUser(savedUser);
-
-        // Opcional: validar token con el backend
-        try {
-          const currentUser = await api.getMe();
-          setUser(currentUser);
-          api.setCurrentUser(currentUser);
-          await authStorage.saveUser(currentUser);
-        } catch (err) {
-          // Token inválido, limpiar sesión
-          await clearSession();
-        }
+        console.log('✅ Session restored for:', savedUser.email);
+      } else {
+        console.log('❌ No saved session found');
       }
     } catch (err) {
-      console.error('Error loading session:', err);
+      console.error('❌ Error loading session:', err);
+      await clearSession();
     } finally {
       setIsLoading(false);
     }
