@@ -56,13 +56,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, segments, isLoading]);
 
   async function loadSession() {
+    console.log('🔄 Starting loadSession...');
     try {
+      console.log('📦 Getting token from storage...');
       const token = await authStorage.getToken();
+      console.log('📦 Getting user from storage...');
       const savedUser = await authStorage.getUser();
 
-      console.log('📱 Loading session:', { hasToken: !!token, hasUser: !!savedUser, user: savedUser });
+      console.log('📱 Loading session:', {
+        hasToken: !!token,
+        hasUser: !!savedUser,
+        userId: savedUser?.id,
+        userEmail: savedUser?.email
+      });
 
       if (token && savedUser) {
+        console.log('🔧 Setting token and user in API...');
         api.setToken(token);
         api.setCurrentUser(savedUser);
         setUser(savedUser);
@@ -72,8 +81,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error('❌ Error loading session:', err);
-      await clearSession();
+      try {
+        await clearSession();
+      } catch (clearErr) {
+        console.error('❌ Error clearing session:', clearErr);
+      }
     } finally {
+      console.log('✅ Setting isLoading to false');
       setIsLoading(false);
     }
   }
