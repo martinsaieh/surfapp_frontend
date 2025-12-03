@@ -9,17 +9,25 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function IndexScreen() {
   const router = useRouter();
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     console.log('📍 Index screen - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
 
     if (!isLoading) {
-      const destination = isAuthenticated ? '/(tabs)/home' : '/(auth)/login';
-      console.log('🚀 Redirecting to:', destination);
-      router.replace(destination);
+      if (!isAuthenticated) {
+        console.log('🚀 Redirecting to: login');
+        router.replace('/(auth)/login');
+      } else if (user) {
+        const destination =
+          user.role === 'photographer'
+            ? '/(tabs-photographer)/services'
+            : '/(tabs)/home';
+        console.log('🚀 Redirecting to:', destination, 'role:', user.role);
+        router.replace(destination);
+      }
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, user]);
 
   return <LoadingSpinner message="Cargando..." />;
 }

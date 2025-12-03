@@ -10,10 +10,10 @@ import {
   FlatList,
   SafeAreaView,
   RefreshControl,
-  ImageBackground,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Waves } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api-supabase';
 import { Photographer } from '@/lib/types';
@@ -96,12 +96,14 @@ export default function HomeScreen() {
         style={styles.headerGradient}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Waves size={32} color="#FFFFFF" strokeWidth={2.5} />
+            <Image
+              source={require('@/assets/images/icon.png')}
+              style={styles.logo}
+            />
             <View style={styles.headerText}>
               <Text style={styles.greeting}>
                 Hola, {user?.name.split(' ')[0] || 'Surfer'}!
               </Text>
-              <Text style={styles.title}>Pichilemu</Text>
               <Text style={styles.subtitle}>Encuentra tu fotógrafo</Text>
             </View>
           </View>
@@ -135,7 +137,6 @@ export default function HomeScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Waves size={48} color="#D1D1D6" />
             <Text style={styles.emptyText}>
               {searchQuery
                 ? 'No se encontraron fotógrafos con ese criterio'
@@ -171,6 +172,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  logo: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
   },
   headerText: {
     marginLeft: 16,
