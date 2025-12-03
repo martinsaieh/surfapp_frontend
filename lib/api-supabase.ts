@@ -489,6 +489,8 @@ class SupabaseApiClient {
         throw this.createError('No autenticado', 'NOT_AUTHENTICATED');
       }
 
+      console.log('📋 Fetching sessions for user:', this.currentUser.id);
+
       const { data, error } = await supabase
         .from('sessions')
         .select(
@@ -504,39 +506,56 @@ class SupabaseApiClient {
         .eq('surfer_id', this.currentUser.id)
         .order('date', { ascending: false });
 
+      console.log('📊 Sessions query result:', {
+        hasData: !!data,
+        dataLength: data?.length,
+        error: error?.message,
+        firstSession: data?.[0]
+      });
+
       if (error) {
+        console.error('❌ Sessions error:', error);
         throw this.createError(error.message, 'FETCH_ERROR');
       }
 
-      return (data || []).map((s: any) => ({
-        id: s.id,
-        booking_id: s.booking_id,
-        surfer_id: s.surfer_id,
-        photographer_id: s.photographer_id,
-        photographer_name: s.photographer.name,
-        photographer_avatar: s.photographer.avatar,
-        spot: s.spot,
-        date: s.date,
-        time: s.time,
-        duration_hours: s.duration_hours,
-        status: s.status,
-        conditions: s.wave_height
-          ? {
-              wave_height: s.wave_height,
-              wave_period: s.wave_period,
-              wind_speed: s.wind_speed,
-              wind_direction: s.wind_direction,
-              tide: s.tide,
-              water_temp: s.water_temp,
-            }
-          : undefined,
-        notes: s.notes,
-        media_count: s.media?.[0]?.count || 0,
-        video_summary_url: s.video_summary_url,
-        created_at: s.created_at,
-        updated_at: s.updated_at,
-      }));
+      return (data || []).map((s: any) => {
+        console.log('📸 Mapping session:', {
+          id: s.id,
+          photographer: s.photographer,
+          mediaArray: s.media
+        });
+
+        return {
+          id: s.id,
+          booking_id: s.booking_id,
+          surfer_id: s.surfer_id,
+          photographer_id: s.photographer_id,
+          photographer_name: s.photographer?.name || 'Desconocido',
+          photographer_avatar: s.photographer?.avatar || null,
+          spot: s.spot,
+          date: s.date,
+          time: s.time,
+          duration_hours: s.duration_hours,
+          status: s.status,
+          conditions: s.wave_height
+            ? {
+                wave_height: s.wave_height,
+                wave_period: s.wave_period,
+                wind_speed: s.wind_speed,
+                wind_direction: s.wind_direction,
+                tide: s.tide,
+                water_temp: s.water_temp,
+              }
+            : undefined,
+          notes: s.notes,
+          media_count: Array.isArray(s.media) ? (s.media[0]?.count || 0) : 0,
+          video_summary_url: s.video_summary_url,
+          created_at: s.created_at,
+          updated_at: s.updated_at,
+        };
+      });
     } catch (error: any) {
+      console.error('❌ getMySessions error:', error);
       throw this.handleError(error);
     }
   }
@@ -567,8 +586,8 @@ class SupabaseApiClient {
         booking_id: data.booking_id,
         surfer_id: data.surfer_id,
         photographer_id: data.photographer_id,
-        photographer_name: data.photographer.name,
-        photographer_avatar: data.photographer.avatar,
+        photographer_name: data.photographer?.name || 'Desconocido',
+        photographer_avatar: data.photographer?.avatar || null,
         spot: data.spot,
         date: data.date,
         time: data.time,
@@ -585,7 +604,7 @@ class SupabaseApiClient {
             }
           : undefined,
         notes: data.notes,
-        media_count: data.media?.[0]?.count || 0,
+        media_count: Array.isArray(data.media) ? (data.media[0]?.count || 0) : 0,
         video_summary_url: data.video_summary_url,
         created_at: data.created_at,
         updated_at: data.updated_at,
