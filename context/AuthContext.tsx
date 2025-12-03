@@ -50,8 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Usuario no autenticado intentando acceder a rutas protegidas
       setTimeout(() => router.replace('/(auth)/login'), 0);
     } else if (user && inAuthGroup) {
-      // Usuario autenticado en rutas de auth, redirigir a home
-      setTimeout(() => router.replace('/(tabs)/home'), 0);
+      // Usuario autenticado en rutas de auth, redirigir según rol
+      if (user.role === 'photographer') {
+        setTimeout(() => router.replace('/(tabs-photographer)/services'), 0);
+      } else {
+        setTimeout(() => router.replace('/(tabs)/home'), 0);
+      }
     }
   }, [user, segments, isLoading]);
 
