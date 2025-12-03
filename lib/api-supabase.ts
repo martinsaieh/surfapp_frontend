@@ -493,16 +493,13 @@ class SupabaseApiClient {
 
       const { data, error } = await supabase
         .from('sessions')
-        .select(
-          `
+        .select(`
           *,
           photographer:users!sessions_photographer_id_fkey (
             name,
             avatar
-          ),
-          media (count)
-        `
-        )
+          )
+        `)
         .eq('surfer_id', this.currentUser.id)
         .order('date', { ascending: false });
 
@@ -518,11 +515,28 @@ class SupabaseApiClient {
         throw this.createError(error.message, 'FETCH_ERROR');
       }
 
+      const sessionIds = (data || []).map((s: any) => s.id);
+
+      let mediaCounts: Record<string, number> = {};
+      if (sessionIds.length > 0) {
+        const { data: mediaData } = await supabase
+          .from('media')
+          .select('session_id')
+          .in('session_id', sessionIds);
+
+        if (mediaData) {
+          mediaCounts = mediaData.reduce((acc: Record<string, number>, m: any) => {
+            acc[m.session_id] = (acc[m.session_id] || 0) + 1;
+            return acc;
+          }, {});
+        }
+      }
+
       return (data || []).map((s: any) => {
         console.log('📸 Mapping session:', {
           id: s.id,
           photographer: s.photographer,
-          mediaArray: s.media
+          mediaCount: mediaCounts[s.id] || 0
         });
 
         return {
@@ -548,7 +562,7 @@ class SupabaseApiClient {
               }
             : undefined,
           notes: s.notes,
-          media_count: Array.isArray(s.media) ? (s.media[0]?.count || 0) : 0,
+          media_count: mediaCounts[s.id] || 0,
           video_summary_url: s.video_summary_url,
           created_at: s.created_at,
           updated_at: s.updated_at,
@@ -564,22 +578,24 @@ class SupabaseApiClient {
     try {
       const { data, error } = await supabase
         .from('sessions')
-        .select(
-          `
+        .select(`
           *,
           photographer:users!sessions_photographer_id_fkey (
             name,
             avatar
-          ),
-          media (count)
-        `
-        )
+          )
+        `)
         .eq('id', id)
         .single();
 
       if (error || !data) {
         throw this.createError('Sesión no encontrada', 'NOT_FOUND');
       }
+
+      const { count: mediaCount } = await supabase
+        .from('media')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', id);
 
       return {
         id: data.id,
@@ -604,7 +620,7 @@ class SupabaseApiClient {
             }
           : undefined,
         notes: data.notes,
-        media_count: Array.isArray(data.media) ? (data.media[0]?.count || 0) : 0,
+        media_count: mediaCount || 0,
         video_summary_url: data.video_summary_url,
         created_at: data.created_at,
         updated_at: data.updated_at,
