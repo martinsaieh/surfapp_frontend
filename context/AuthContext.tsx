@@ -62,12 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (token && savedUser) {
         api.setToken(token);
+        api.setCurrentUser(savedUser);
         setUser(savedUser);
 
         // Opcional: validar token con el backend
         try {
           const currentUser = await api.getMe();
           setUser(currentUser);
+          api.setCurrentUser(currentUser);
           await authStorage.saveUser(currentUser);
         } catch (err) {
           // Token inválido, limpiar sesión
@@ -92,8 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authStorage.saveToken(response.access_token);
       await authStorage.saveUser(response.user);
 
-      // Configurar token en API client
+      // Configurar token y usuario en API client
       api.setToken(response.access_token);
+      api.setCurrentUser(response.user);
       setUser(response.user);
 
       // La navegación se maneja automáticamente en el useEffect
@@ -117,8 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authStorage.saveToken(response.access_token);
       await authStorage.saveUser(response.user);
 
-      // Configurar token en API client
+      // Configurar token y usuario en API client
       api.setToken(response.access_token);
+      api.setCurrentUser(response.user);
       setUser(response.user);
 
       // La navegación se maneja automáticamente en el useEffect
@@ -149,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function clearSession() {
     await authStorage.clearAll();
     api.setToken(null);
+    api.setCurrentUser(null);
     setUser(null);
     setError(null);
   }

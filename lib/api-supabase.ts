@@ -136,7 +136,12 @@ class SupabaseApiClient {
   }
 
   setToken(token: string | null) {
-    // No se necesita en Supabase
+    // Token no usado en Supabase pero necesitamos mantener la interfaz
+  }
+
+  setCurrentUser(user: User | null) {
+    this.currentUser = user;
+    console.log('👤 Current user set:', user?.id, user?.email);
   }
 
   getToken(): string | null {
@@ -489,7 +494,14 @@ class SupabaseApiClient {
         throw this.createError('No autenticado', 'NOT_AUTHENTICATED');
       }
 
-      console.log('📋 Fetching sessions for user:', this.currentUser.id);
+      console.log('📋 Fetching sessions for user:', {
+        userId: this.currentUser.id,
+        userIdType: typeof this.currentUser.id,
+        userObject: this.currentUser
+      });
+
+      const userId = String(this.currentUser.id);
+      console.log('🔍 Using userId:', userId, typeof userId);
 
       const { data, error } = await supabase
         .from('sessions')
@@ -500,7 +512,7 @@ class SupabaseApiClient {
             avatar
           )
         `)
-        .eq('surfer_id', this.currentUser.id)
+        .eq('surfer_id', userId)
         .order('date', { ascending: false });
 
       console.log('📊 Sessions query result:', {
