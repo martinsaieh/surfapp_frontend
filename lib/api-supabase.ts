@@ -730,8 +730,8 @@ class SupabaseApiClient {
           `
           *,
           session:sessions(id, spot, date),
-          surfer:users!conversations_surfer_id_fkey(id, name, avatar_url),
-          photographer:users!conversations_photographer_id_fkey(id, name, avatar_url)
+          surfer:users!conversations_surfer_id_fkey(id, name, avatar),
+          photographer:users!conversations_photographer_id_fkey(id, name, avatar)
         `
         )
         .or(`surfer_id.eq.${userId},photographer_id.eq.${userId}`)
@@ -767,13 +767,13 @@ class SupabaseApiClient {
             session: conv.session,
             surfer_id: conv.surfer_id,
             surfer_name: conv.surfer.name,
-            surfer_avatar: conv.surfer.avatar_url,
+            surfer_avatar: conv.surfer.avatar,
             photographer_id: conv.photographer_id,
             photographer_name: conv.photographer.name,
-            photographer_avatar: conv.photographer.avatar_url,
+            photographer_avatar: conv.photographer.avatar,
             other_user_id: otherUser.id,
             other_user_name: otherUser.name,
-            other_user_avatar: otherUser.avatar_url,
+            other_user_avatar: otherUser.avatar,
             last_message: lastMsg?.message,
             last_message_at: conv.last_message_at,
             unread_count: unreadCount || 0,
@@ -848,7 +848,7 @@ class SupabaseApiClient {
         .select(
           `
           *,
-          sender:users!messages_sender_id_fkey(name, avatar_url)
+          sender:users!messages_sender_id_fkey(name, avatar)
         `
         )
         .eq('conversation_id', conversationId)
@@ -863,7 +863,7 @@ class SupabaseApiClient {
         conversation_id: msg.conversation_id,
         sender_id: msg.sender_id,
         sender_name: msg.sender.name,
-        sender_avatar: msg.sender.avatar_url,
+        sender_avatar: msg.sender.avatar,
         message: msg.message,
         is_read: msg.is_read,
         created_at: msg.created_at,
@@ -889,7 +889,7 @@ class SupabaseApiClient {
         .select(
           `
           *,
-          sender:users!messages_sender_id_fkey(name, avatar_url)
+          sender:users!messages_sender_id_fkey(name, avatar)
         `
         )
         .single();
@@ -908,7 +908,7 @@ class SupabaseApiClient {
         conversation_id: data.conversation_id,
         sender_id: data.sender_id,
         sender_name: data.sender.name,
-        sender_avatar: data.sender.avatar_url,
+        sender_avatar: data.sender.avatar,
         message: data.message,
         is_read: data.is_read,
         created_at: data.created_at,
