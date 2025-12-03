@@ -11,6 +11,8 @@ import {
   SafeAreaView,
   TouchableOpacity,
   RefreshControl,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -22,6 +24,9 @@ import {
   Wind,
   CloudRain,
   FileText,
+  Edit2,
+  Save,
+  X,
 } from 'lucide-react-native';
 import api from '@/lib/api-supabase';
 import { Session, Media, LogEntry } from '@/lib/types';
@@ -41,6 +46,8 @@ export default function SessionDetailScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'media' | 'logs'>('media');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedNotes, setEditedNotes] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -80,6 +87,27 @@ export default function SessionDetailScreen() {
       month: 'long',
       year: 'numeric',
     });
+  };
+
+  const handleEditNotes = () => {
+    setEditedNotes(session?.notes || '');
+    setIsEditingNotes(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingNotes(false);
+    setEditedNotes('');
+  };
+
+  const handleSaveNotes = async () => {
+    try {
+      await api.updateSessionNotes(id!, editedNotes);
+      setSession((prev) => prev ? { ...prev, notes: editedNotes } : null);
+      setIsEditingNotes(false);
+      Alert.alert('Guardado', 'Notas actualizadas correctamente');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo guardar las notas');
+    }
   };
 
   if (isLoading) {
@@ -168,12 +196,47 @@ export default function SessionDetailScreen() {
           </View>
         )}
 
-        {session.notes && (
-          <View style={styles.notesCard}>
-            <Text style={styles.sectionTitle}>Notas</Text>
-            <Text style={styles.notesText}>{session.notes}</Text>
+        <View style={styles.notesCard}>
+          <View style={styles.notesHeader}>
+            <Text style={styles.notesSectionTitle}>Notas</Text>
+            {!isEditingNotes ? (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={handleEditNotes}>
+                <Edit2 size={18} color="#007AFF" />
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.editActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelEdit}>
+                  <X size={18} color="#8E8E93" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSaveNotes}>
+                  <Save size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        )}
+          {isEditingNotes ? (
+            <TextInput
+              style={styles.notesInput}
+              value={editedNotes}
+              onChangeText={setEditedNotes}
+              placeholder="Escribe tus notas aquí..."
+              placeholderTextColor="#C7C7CC"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          ) : (
+            <Text style={styles.notesText}>
+              {session.notes || 'No hay notas aún. Toca el botón de editar para agregar notas.'}
+            </Text>
+          )}
+        </View>
 
         <View style={styles.tabContainer}>
           <TouchableOpacity
@@ -332,6 +395,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#3C3C43',
     lineHeight: 20,
+  },
+  notesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notesSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  editButton: {
+    padding: 4,
+  },
+  editActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cancelButton: {
+    padding: 8,
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  notesInput: {
+    fontSize: 14,
+    color: '#1C1C1E',
+    lineHeight: 20,
+    backgroundColor: '#F2F2F7',
+    padding: 12,
+    borderRadius: 8,
+    minHeight: 100,
   },
   tabContainer: {
     flexDirection: 'row',

@@ -705,6 +705,21 @@ class SupabaseApiClient {
     }
   }
 
+  async updateSessionNotes(sessionId: string, notes: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({ notes })
+        .eq('id', sessionId);
+
+      if (error) {
+        throw this.createError(error.message, 'UPDATE_ERROR');
+      }
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
   // ============ SUBIDA DE ARCHIVOS ============
 
   async getPresignedUploadUrl(
