@@ -18,7 +18,7 @@ import {
   User,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api-supabase';
+import { supabase } from '@/lib/supabase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
@@ -52,7 +52,7 @@ export default function RequestsScreen() {
 
     try {
       setError(null);
-      const { data, error: fetchError } = await api.supabase
+      const { data, error: fetchError } = await supabase
         .from('sessions')
         .select(
           `
@@ -98,7 +98,7 @@ export default function RequestsScreen() {
     newStatus: 'confirmed' | 'cancelled'
   ) => {
     try {
-      const { error: updateError } = await api.supabase
+      const { error: updateError } = await supabase
         .from('sessions')
         .update({ status: newStatus })
         .eq('id', requestId);

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Clock, Check, X } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api-supabase';
+import { supabase } from '@/lib/supabase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { Button } from '@/components/ui/Button';
@@ -67,7 +67,7 @@ export default function ScheduleScreen() {
 
     try {
       setError(null);
-      const { data, error: fetchError } = await api.supabase
+      const { data, error: fetchError } = await supabase
         .from('photographer_schedules')
         .select('*')
         .eq('photographer_id', user.id)
@@ -129,7 +129,7 @@ export default function ScheduleScreen() {
 
     setIsSaving(true);
     try {
-      await api.supabase
+      await supabase
         .from('photographer_schedules')
         .delete()
         .eq('photographer_id', user.id);
@@ -144,7 +144,7 @@ export default function ScheduleScreen() {
           is_available: schedule.is_available,
         }));
 
-        const { error: insertError } = await api.supabase
+        const { error: insertError } = await supabase
           .from('photographer_schedules')
           .insert(schedulesData);
 

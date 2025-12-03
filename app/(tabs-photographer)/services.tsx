@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Plus, Edit2, Trash2, X } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api-supabase';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -57,7 +57,7 @@ export default function ServicesScreen() {
 
     try {
       setError(null);
-      const { data, error: fetchError } = await api.supabase
+      const { data, error: fetchError } = await supabase
         .from('photographer_services')
         .select('*')
         .eq('photographer_id', user.id)
@@ -122,14 +122,14 @@ export default function ServicesScreen() {
       };
 
       if (editingService) {
-        const { error: updateError } = await api.supabase
+        const { error: updateError } = await supabase
           .from('photographer_services')
           .update(serviceData)
           .eq('id', editingService.id);
 
         if (updateError) throw updateError;
       } else {
-        const { error: insertError } = await api.supabase
+        const { error: insertError } = await supabase
           .from('photographer_services')
           .insert([serviceData]);
 
@@ -153,7 +153,7 @@ export default function ServicesScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            const { error } = await api.supabase
+            const { error } = await supabase
               .from('photographer_services')
               .delete()
               .eq('id', serviceId);
