@@ -10,8 +10,10 @@ import {
   FlatList,
   SafeAreaView,
   RefreshControl,
+  ImageBackground,
 } from 'react-native';
-import { Search } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Search, Waves } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api-supabase';
 import { Photographer } from '@/lib/types';
@@ -87,26 +89,37 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.greeting}>
-          Hola, {user?.name.split(' ')[0] || 'Surfer'}!
-        </Text>
-        <Text style={styles.title}>Encuentra tu fotógrafo</Text>
-      </View>
+      <LinearGradient
+        colors={['#0A7AFF', '#00C6FB']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Waves size={32} color="#FFFFFF" strokeWidth={2.5} />
+            <View style={styles.headerText}>
+              <Text style={styles.greeting}>
+                Hola, {user?.name.split(' ')[0] || 'Surfer'}!
+              </Text>
+              <Text style={styles.title}>Pichilemu</Text>
+              <Text style={styles.subtitle}>Encuentra tu fotógrafo</Text>
+            </View>
+          </View>
 
-      <View style={styles.searchContainer}>
-        <Search
-          size={20}
-          color="#8E8E93"
-          style={styles.searchIcon}
-        />
-        <Input
-          placeholder="Buscar por nombre o spot..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          containerStyle={styles.searchInput}
-        />
-      </View>
+          <View style={styles.searchWrapper}>
+            <View style={styles.searchContainer}>
+              <Search size={20} color="#0A7AFF" style={styles.searchIcon} />
+              <Input
+                placeholder="Buscar por nombre o spot..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                containerStyle={styles.searchInput}
+                style={styles.searchInputText}
+              />
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
 
       <FlatList
         data={filteredPhotographers}
@@ -117,11 +130,12 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor="#007AFF"
+            tintColor="#0A7AFF"
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            <Waves size={48} color="#D1D1D6" />
             <Text style={styles.emptyText}>
               {searchQuery
                 ? 'No se encontraron fotógrafos con ese criterio'
@@ -137,49 +151,90 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  headerGradient: {
+    paddingBottom: 20,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 16,
-    backgroundColor: '#FFFFFF',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerText: {
+    marginLeft: 16,
+    flex: 1,
   },
   greeting: {
-    fontSize: 16,
-    color: '#8E8E93',
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
     marginBottom: 4,
+    fontWeight: '500',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1C1C1E',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.95,
+    fontWeight: '400',
+  },
+  searchWrapper: {
+    paddingHorizontal: 4,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
     marginBottom: 0,
   },
+  searchInputText: {
+    fontSize: 16,
+  },
   list: {
     padding: 16,
+    paddingTop: 20,
   },
   emptyState: {
-    padding: 32,
+    padding: 48,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+    marginTop: 16,
+    fontWeight: '500',
   },
 });

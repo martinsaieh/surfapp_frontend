@@ -14,6 +14,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
@@ -144,24 +145,26 @@ export default function PhotographerDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#007AFF" />
-        </TouchableOpacity>
-        <View style={{ width: 24 }} />
-      </View>
-
       <ScrollView contentContainerStyle={styles.content}>
-        <Image
-          source={{
-            uri:
-              photographer.avatar ||
-              'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
-          }}
-          style={styles.banner}
-        />
+        <View style={styles.bannerContainer}>
+          <Image
+            source={{
+              uri:
+                photographer.avatar ||
+                'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+            }}
+            style={styles.banner}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.6)']}
+            style={styles.bannerGradient}
+          />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
@@ -283,36 +286,42 @@ export default function PhotographerDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'transparent',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F8F9FA',
   },
   content: {
     paddingBottom: 32,
   },
+  bannerContainer: {
+    position: 'relative',
+    height: 300,
+  },
   banner: {
     width: width,
-    height: 250,
+    height: '100%',
     backgroundColor: '#F2F2F7',
+  },
+  bannerGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 120,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   profileSection: {
     backgroundColor: '#FFFFFF',

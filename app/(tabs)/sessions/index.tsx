@@ -12,7 +12,8 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { Filter } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Filter, Waves } from 'lucide-react-native';
 import api from '@/lib/api-supabase';
 import { Session } from '@/lib/types';
 import { SessionCard } from '@/components/cards/SessionCard';
@@ -82,9 +83,16 @@ export default function SessionsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Mis Sesiones</Text>
-      </View>
+      <LinearGradient
+        colors={['#0A7AFF', '#00C6FB']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Mis Sesiones</Text>
+          <Text style={styles.subtitle}>{sessions.length} sesiones en total</Text>
+        </View>
+      </LinearGradient>
 
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -183,39 +191,60 @@ export default function SessionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  headerGradient: {
+    paddingBottom: 20,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 16,
-    backgroundColor: '#FFFFFF',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1C1C1E',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    fontWeight: '500',
   },
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-    gap: 8,
+    paddingVertical: 16,
+    gap: 10,
     flexWrap: 'wrap',
   },
   filterButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F2F2F7',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterButtonActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0A7AFF',
+    shadowColor: '#0A7AFF',
+    shadowOpacity: 0.3,
   },
   filterButtonText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#3C3C43',
   },
@@ -226,12 +255,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyState: {
-    padding: 32,
+    padding: 48,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+    marginTop: 16,
+    fontWeight: '500',
   },
 });
