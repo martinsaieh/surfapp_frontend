@@ -11,7 +11,6 @@ import {
   SafeAreaView,
   Image,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import {
   User as UserIcon,
@@ -49,18 +48,9 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro que deseas cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar Sesión',
-          style: 'destructive',
-          onPress: logout,
-        },
-      ]
-    );
+    if (window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
+      logout();
+    }
   };
 
   if (!user) {
