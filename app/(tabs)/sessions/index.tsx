@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Filter } from 'lucide-react-native';
-import api from '@/lib/api';
+import api from '@/lib/api-supabase';
 import { Session } from '@/lib/types';
 import { SessionCard } from '@/components/cards/SessionCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';

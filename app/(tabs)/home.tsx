@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api from '@/lib/api-supabase';
 import { Photographer } from '@/lib/types';
 import { PhotographerCard } from '@/components/cards/PhotographerCard';
 import { Input } from '@/components/ui/Input';

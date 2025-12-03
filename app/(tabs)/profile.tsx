@@ -23,7 +23,7 @@ import {
   Camera,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api from '@/lib/api-supabase';
 import { StorageUsage } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';

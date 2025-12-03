@@ -24,7 +24,7 @@ import {
   Award,
   Calendar,
 } from 'lucide-react-native';
-import api from '@/lib/api';
+import api from '@/lib/api-supabase';
 import { Photographer, CreateBookingRequest } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';

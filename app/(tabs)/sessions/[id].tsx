@@ -23,7 +23,7 @@ import {
   CloudRain,
   FileText,
 } from 'lucide-react-native';
-import api from '@/lib/api';
+import api from '@/lib/api-supabase';
 import { Session, Media, LogEntry } from '@/lib/types';
 import { MediaGrid } from '@/components/cards/MediaGrid';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
