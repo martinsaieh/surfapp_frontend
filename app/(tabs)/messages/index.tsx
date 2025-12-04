@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   RefreshControl,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MessageCircle, Clock } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -69,7 +70,10 @@ export default function MessagesScreen() {
         onPress={() => router.push(`/messages/${item.id}` as any)}
         activeOpacity={0.7}>
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
+          <View style={[
+            styles.avatar,
+            item.unread_count > 0 && styles.avatarUnread
+          ]}>
             <Text style={styles.avatarText}>
               {item.other_user_name.charAt(0).toUpperCase()}
             </Text>
@@ -85,7 +89,12 @@ export default function MessagesScreen() {
 
         <View style={styles.conversationContent}>
           <View style={styles.conversationHeader}>
-            <Text style={styles.userName}>{item.other_user_name}</Text>
+            <Text style={[
+              styles.userName,
+              item.unread_count > 0 && styles.unreadUserName
+            ]}>
+              {item.other_user_name}
+            </Text>
             <Text style={styles.timestamp}>
               {formatTime(item.last_message_at)}
             </Text>
@@ -101,7 +110,7 @@ export default function MessagesScreen() {
                 styles.lastMessage,
                 item.unread_count > 0 && styles.unreadMessage,
               ]}
-              numberOfLines={1}>
+              numberOfLines={2}>
               {item.last_message}
             </Text>
           )}
@@ -122,15 +131,33 @@ export default function MessagesScreen() {
     );
   }
 
+  const unreadCount = conversations.filter(c => c.unread_count > 0).length;
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mensajes</Text>
-      </View>
+      <LinearGradient
+        colors={['#0A7AFF', '#00C6FB']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <MessageCircle size={32} color="#FFFFFF" />
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>Mensajes</Text>
+              <Text style={styles.headerSubtitle}>
+                {unreadCount > 0
+                  ? `${unreadCount} ${unreadCount === 1 ? 'no leído' : 'no leídos'}`
+                  : 'Todo al día'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
 
       {conversations.length === 0 ? (
         <View style={styles.emptyState}>
-          <MessageCircle size={64} color="#D1D1D6" strokeWidth={1.5} />
+          <MessageCircle size={64} color="#E5E5EA" />
           <Text style={styles.emptyTitle}>No hay conversaciones</Text>
           <Text style={styles.emptyText}>
             Tus conversaciones con fotógrafos aparecerán aquí
@@ -146,7 +173,7 @@ export default function MessagesScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#007AFF"
+              tintColor="#0A7AFF"
             />
           }
         />
@@ -158,62 +185,98 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  headerGradient: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    marginLeft: 16,
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#1C1C1E',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginTop: 4,
+    fontWeight: '500',
   },
   list: {
-    paddingVertical: 8,
+    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   conversationItem: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   avatarContainer: {
     position: 'relative',
-    marginRight: 12,
+    marginRight: 16,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#0A7AFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarUnread: {
+    borderWidth: 3,
+    borderColor: '#0A7AFF',
+  },
   avatarText: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   unreadBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: -2,
+    right: -2,
     backgroundColor: '#FF3B30',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   unreadText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
   },
@@ -225,25 +288,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   userName: {
     fontSize: 17,
     fontWeight: '600',
     color: '#1C1C1E',
+    flex: 1,
+  },
+  unreadUserName: {
+    fontWeight: '700',
   },
   timestamp: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#8E8E93',
+    fontWeight: '500',
+    marginLeft: 8,
   },
   sessionInfo: {
     fontSize: 13,
-    color: '#007AFF',
-    marginBottom: 2,
+    color: '#0A7AFF',
+    marginBottom: 4,
+    fontWeight: '600',
   },
   lastMessage: {
     fontSize: 15,
     color: '#8E8E93',
+    lineHeight: 20,
   },
   unreadMessage: {
     fontWeight: '600',
@@ -259,13 +330,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#1C1C1E',
-    marginTop: 16,
+    marginTop: 24,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
   },
 });

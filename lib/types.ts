@@ -10,6 +10,9 @@ export interface User {
   role: 'surfer' | 'photographer';
   avatar?: string;
   phone?: string;
+  bio?: string;
+  experience_years?: number;
+  equipment?: string[];
   created_at: string;
 }
 

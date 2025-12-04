@@ -1,5 +1,5 @@
 /**
- * Pantalla de perfil del usuario
+ * Pantalla de perfil del surfer
  */
 
 import React, { useState, useEffect } from 'react';
@@ -12,6 +12,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   User as UserIcon,
   Mail,
@@ -19,7 +20,7 @@ import {
   HardDrive,
   LogOut,
   Calendar,
-  Camera,
+  Waves,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api-supabase';
@@ -60,26 +61,31 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Mi Perfil</Text>
-        </View>
-
-        <View style={styles.profileCard}>
-          <Image
-            source={{
-              uri:
-                user.avatar ||
-                'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
-            }}
-            style={styles.avatar}
-          />
-          <Text style={styles.name}>{user.name}</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>
-              {user.role === 'surfer' ? 'Surfer' : 'Fotógrafo'}
-            </Text>
+        <LinearGradient
+          colors={['#0A7AFF', '#00C6FB']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}>
+          <View style={styles.header}>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{
+                  uri:
+                    user.avatar ||
+                    'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+                }}
+                style={styles.avatar}
+              />
+              <View style={styles.waveBadge}>
+                <Waves size={16} color="#FFFFFF" />
+              </View>
+            </View>
+            <Text style={styles.name}>{user.name}</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleText}>Surfer</Text>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información Personal</Text>
@@ -168,50 +174,76 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
   },
   content: {
     paddingBottom: 32,
   },
+  headerGradient: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    paddingBottom: 40,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   header: {
-    padding: 20,
-    paddingTop: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1C1C1E',
-  },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    padding: 24,
+    paddingTop: 24,
+    paddingHorizontal: 20,
+  },
+  avatarContainer: {
+    position: 'relative',
     marginBottom: 16,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#F2F2F7',
-    marginBottom: 16,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  waveBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#0A7AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   name: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1C1C1E',
-    marginBottom: 8,
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   roleBadge: {
-    backgroundColor: '#007AFF20',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   roleText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#FFFFFF',
   },
   section: {
     marginBottom: 16,
@@ -219,79 +251,95 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1C1C1E',
     marginBottom: 12,
   },
   infoCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   infoContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
   },
   infoLabel: {
     fontSize: 13,
     color: '#8E8E93',
-    marginBottom: 2,
+    marginBottom: 4,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 16,
     color: '#1C1C1E',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   storageCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   storageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   storageInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
   },
   storagePlan: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1C1C1E',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   storageText: {
     fontSize: 14,
     color: '#8E8E93',
+    fontWeight: '500',
   },
   progressBar: {
-    height: 8,
+    height: 10,
     backgroundColor: '#F2F2F7',
-    borderRadius: 4,
+    borderRadius: 5,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#007AFF',
-    borderRadius: 4,
+    backgroundColor: '#0A7AFF',
+    borderRadius: 5,
   },
   storagePercentage: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#8E8E93',
     textAlign: 'right',
+    fontWeight: '600',
   },
   version: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#8E8E93',
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 24,
+    fontWeight: '500',
   },
 });

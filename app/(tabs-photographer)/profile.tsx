@@ -11,6 +11,9 @@ import {
   SafeAreaView,
   Image,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -21,9 +24,14 @@ import {
   LogOut,
   Calendar,
   Camera,
+  Edit3,
+  X,
+  Briefcase,
+  FileText,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api-supabase';
+import { supabase } from '@/lib/supabase';
 import { StorageUsage } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -32,10 +40,27 @@ export default function ProfileScreen() {
   const { user, logout, isLoading: authLoading } = useAuth();
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    bio: user?.bio || '',
+    experience_years: user?.experience_years?.toString() || '0',
+    equipment: user?.equipment?.join('\n') || '',
+  });
 
   useEffect(() => {
     loadStorageUsage();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        bio: user.bio || '',
+        experience_years: user.experience_years?.toString() || '0',
+        equipment: user.equipment?.join('\n') || '',
+      });
+    }
+  }, [user]);
 
   const loadStorageUsage = async () => {
     try {
@@ -45,6 +70,37 @@ export default function ProfileScreen() {
       console.error('Error loading storage:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    setIsSaving(true);
+    try {
+      const equipmentArray = formData.equipment
+        .split('\n')
+        .filter((item) => item.trim())
+        .map((item) => item.trim());
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          bio: formData.bio,
+          experience_years: parseInt(formData.experience_years) || 0,
+          equipment: equipmentArray,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      Alert.alert('Éxito', 'Perfil actualizado correctamente');
+      setShowEditModal(false);
+      window.location.reload();
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo actualizar el perfil');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -66,6 +122,11 @@ export default function ProfileScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setShowEditModal(true)}>
+            <Edit3 size={20} color="#FFFFFF" />
+          </TouchableOpacity>
           <View style={styles.header}>
             <View style={styles.avatarContainer}>
               <Image
@@ -86,6 +147,51 @@ export default function ProfileScreen() {
             </View>
           </View>
         </LinearGradient>
+
+        {user.bio && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sobre mí</Text>
+            <View style={styles.bioCard}>
+              <Text style={styles.bioText}>{user.bio}</Text>
+            </View>
+          </View>
+        )}
+
+        {(user.experience_years || user.equipment?.length) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Experiencia y Equipo</Text>
+            <View style={styles.experienceCard}>
+              {user.experience_years && user.experience_years > 0 && (
+                <View style={styles.experienceRow}>
+                  <View style={styles.iconCircle}>
+                    <Briefcase size={20} color="#0A7AFF" />
+                  </View>
+                  <View style={styles.experienceContent}>
+                    <Text style={styles.experienceLabel}>Experiencia</Text>
+                    <Text style={styles.experienceValue}>
+                      {user.experience_years} {user.experience_years === 1 ? 'año' : 'años'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {user.equipment && user.equipment.length > 0 && (
+                <View style={styles.equipmentContainer}>
+                  <View style={styles.equipmentHeader}>
+                    <Camera size={20} color="#0A7AFF" />
+                    <Text style={styles.equipmentTitle}>Mi Equipo</Text>
+                  </View>
+                  {user.equipment.map((item, index) => (
+                    <View key={index} style={styles.equipmentItem}>
+                      <View style={styles.equipmentDot} />
+                      <Text style={styles.equipmentText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información Personal</Text>
@@ -167,6 +273,62 @@ export default function ProfileScreen() {
 
         <Text style={styles.version}>SurfApp v1.0.0</Text>
       </ScrollView>
+
+      <Modal visible={showEditModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Editar Perfil</Text>
+              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                <X size={24} color="#8E8E93" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <Text style={styles.label}>Biografía</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formData.bio}
+                onChangeText={(text) => setFormData({ ...formData, bio: text })}
+                placeholder="Cuéntanos sobre ti, tu estilo fotográfico..."
+                multiline
+                numberOfLines={4}
+              />
+
+              <Text style={styles.label}>Años de Experiencia</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.experience_years}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, experience_years: text })
+                }
+                placeholder="0"
+                keyboardType="numeric"
+              />
+
+              <Text style={styles.label}>Equipo Fotográfico</Text>
+              <Text style={styles.hint}>Un artículo por línea</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formData.equipment}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, equipment: text })
+                }
+                placeholder={'Canon EOS R5\nDJI Drone\nGoPro Hero 11'}
+                multiline
+                numberOfLines={5}
+              />
+
+              <Button
+                title="Guardar Cambios"
+                onPress={handleSaveProfile}
+                loading={isSaving}
+                style={styles.saveButton}
+              />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -189,6 +351,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+    position: 'relative',
+  },
+  editButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    zIndex: 1,
   },
   header: {
     alignItems: 'center',
@@ -341,5 +518,147 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
     fontWeight: '500',
+  },
+  bioCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  bioText: {
+    fontSize: 16,
+    color: '#1C1C1E',
+    lineHeight: 24,
+  },
+  experienceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  experienceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#0A7AFF20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  experienceContent: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  experienceLabel: {
+    fontSize: 13,
+    color: '#8E8E93',
+    marginBottom: 4,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  experienceValue: {
+    fontSize: 18,
+    color: '#1C1C1E',
+    fontWeight: '700',
+  },
+  equipmentContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#F2F2F7',
+    paddingTop: 20,
+  },
+  equipmentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  equipmentTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1C1C1E',
+    marginLeft: 12,
+  },
+  equipmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  equipmentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#0A7AFF',
+    marginRight: 12,
+  },
+  equipmentText: {
+    fontSize: 15,
+    color: '#3C3C43',
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1C1C1E',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 8,
+  },
+  hint: {
+    fontSize: 13,
+    color: '#8E8E93',
+    marginBottom: 4,
+  },
+  input: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  saveButton: {
+    marginTop: 8,
+    marginBottom: 20,
   },
 });
