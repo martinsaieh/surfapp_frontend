@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,171 +7,72 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  Switch,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Clock, Check, Calendar as CalendarIcon } from 'lucide-react-native';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 
-interface Schedule {
-  id?: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
-}
-
-const DAYS = [
-  'Domingo',
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
+const SPOTS = [
+  'Punta de Lobos',
+  'La Puntilla',
+  'Infiernillo',
+  'Otra playa…',
 ];
 
-const TIME_SLOTS = [
-  '06:00',
-  '07:00',
-  '08:00',
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-  '18:00',
-  '19:00',
-  '20:00',
+const DAYS = [
+  { key: 'monday', label: 'Lunes' },
+  { key: 'tuesday', label: 'Martes' },
+  { key: 'wednesday', label: 'Miércoles' },
+  { key: 'thursday', label: 'Jueves' },
+  { key: 'friday', label: 'Viernes' },
+  { key: 'saturday', label: 'Sábado' },
+  { key: 'sunday', label: 'Domingo' },
 ];
 
 export default function ScheduleScreen() {
-  const { user } = useAuth();
-  const [schedules, setSchedules] = useState<{ [key: string]: Schedule[] }>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedSpots, setSelectedSpots] = useState<string[]>([]);
+  const [workingDays, setWorkingDays] = useState<{ [key: string]: boolean }>({
+    monday: false,
+    tuesday: false,
+    wednesday: false,
+    thursday: false,
+    friday: false,
+    saturday: false,
+    sunday: false,
+  });
+  const [startTime, setStartTime] = useState('08:00');
+  const [endTime, setEndTime] = useState('18:00');
 
-  useEffect(() => {
-    loadSchedules();
-  }, []);
-
-  const loadSchedules = async () => {
-    if (!user) return;
-
-    try {
-      setError(null);
-      const { data, error: fetchError } = await supabase
-        .from('photographer_schedules')
-        .select('*')
-        .eq('photographer_id', user.id)
-        .order('day_of_week', { ascending: true })
-        .order('start_time', { ascending: true });
-
-      if (fetchError) throw fetchError;
-
-      const grouped: { [key: string]: Schedule[] } = {};
-      (data || []).forEach((schedule: any) => {
-        const key = `${schedule.day_of_week}`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(schedule);
-      });
-
-      setSchedules(grouped);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar horarios');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleTimeSlot = (dayIndex: number, time: string) => {
-    const key = `${dayIndex}`;
-    const daySchedules = schedules[key] || [];
-    const existingIndex = daySchedules.findIndex(
-      (s) => s.start_time === time
-    );
-
-    const newSchedules = { ...schedules };
-
-    if (existingIndex >= 0) {
-      newSchedules[key] = daySchedules.filter((_, i) => i !== existingIndex);
-      if (newSchedules[key].length === 0) delete newSchedules[key];
+  const toggleSpot = (spot: string) => {
+    if (selectedSpots.includes(spot)) {
+      setSelectedSpots(selectedSpots.filter((s) => s !== spot));
     } else {
-      const [hour] = time.split(':');
-      const endHour = (parseInt(hour) + 1).toString().padStart(2, '0');
-      const endTime = `${endHour}:00`;
-
-      const newSlot: Schedule = {
-        day_of_week: dayIndex,
-        start_time: time,
-        end_time: endTime,
-        is_available: true,
-      };
-
-      if (!newSchedules[key]) newSchedules[key] = [];
-      newSchedules[key] = [...newSchedules[key], newSlot].sort((a, b) =>
-        a.start_time.localeCompare(b.start_time)
-      );
-    }
-
-    setSchedules(newSchedules);
-  };
-
-  const handleSave = async () => {
-    if (!user) return;
-
-    setIsSaving(true);
-    try {
-      await supabase
-        .from('photographer_schedules')
-        .delete()
-        .eq('photographer_id', user.id);
-
-      const allSchedules = Object.values(schedules).flat();
-      if (allSchedules.length > 0) {
-        const schedulesData = allSchedules.map((schedule) => ({
-          photographer_id: user.id,
-          day_of_week: schedule.day_of_week,
-          start_time: schedule.start_time,
-          end_time: schedule.end_time,
-          is_available: schedule.is_available,
-        }));
-
-        const { error: insertError } = await supabase
-          .from('photographer_schedules')
-          .insert(schedulesData);
-
-        if (insertError) throw insertError;
-      }
-
-      Alert.alert('Éxito', 'Horarios guardados correctamente');
-      loadSchedules();
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudieron guardar los horarios');
-    } finally {
-      setIsSaving(false);
+      setSelectedSpots([...selectedSpots, spot]);
     }
   };
 
-  const isSlotSelected = (dayIndex: number, time: string) => {
-    const key = `${dayIndex}`;
-    const daySchedules = schedules[key] || [];
-    return daySchedules.some((s) => s.start_time === time);
+  const toggleDay = (dayKey: string) => {
+    setWorkingDays({
+      ...workingDays,
+      [dayKey]: !workingDays[dayKey],
+    });
   };
 
-  if (isLoading) {
-    return <LoadingSpinner message="Cargando horarios..." />;
-  }
+  const handleSave = () => {
+    const availability = {
+      spots: selectedSpots,
+      workingDays: workingDays,
+      schedule: {
+        startTime,
+        endTime,
+      },
+    };
 
-  const totalSlots = Object.values(schedules).reduce((sum, day) => sum + day.length, 0);
+    console.log('Disponibilidad guardada (solo local):', availability);
+    Alert.alert('Disponibilidad guardada (solo local)', JSON.stringify(availability, null, 2));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -186,70 +87,92 @@ export default function ScheduleScreen() {
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Disponibilidad</Text>
               <Text style={styles.headerSubtitle}>
-                {totalSlots} {totalSlots === 1 ? 'horario' : 'horarios'} configurados
+                Define en qué spots trabajas y en qué horarios estás disponible
               </Text>
             </View>
           </View>
         </View>
       </LinearGradient>
 
-      {error && <ErrorMessage message={error} onRetry={loadSchedules} />}
-
       <ScrollView style={styles.content}>
-        <View style={styles.instructionCard}>
-          <Clock size={24} color="#0A7AFF" />
-          <View style={styles.instructionText}>
-            <Text style={styles.instructionTitle}>Selecciona tus horarios</Text>
-            <Text style={styles.instructionSubtitle}>
-              Toca para activar/desactivar los horarios en los que estás disponible
-            </Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MapPin size={20} color="#0A7AFF" />
+            <Text style={styles.sectionTitle}>Spots donde trabajas</Text>
+          </View>
+          <View style={styles.sectionContent}>
+            {SPOTS.map((spot) => {
+              const isSelected = selectedSpots.includes(spot);
+              return (
+                <TouchableOpacity
+                  key={spot}
+                  style={[styles.spotItem, isSelected && styles.spotItemSelected]}
+                  onPress={() => toggleSpot(spot)}>
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <View style={styles.checkboxInner} />}
+                  </View>
+                  <Text style={[styles.spotText, isSelected && styles.spotTextSelected]}>
+                    {spot}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
-        {DAYS.map((day, dayIndex) => {
-          const daySlots = schedules[`${dayIndex}`] || [];
-          return (
-            <View key={dayIndex} style={styles.daySection}>
-              <View style={styles.dayHeader}>
-                <Text style={styles.dayTitle}>{day}</Text>
-                {daySlots.length > 0 && (
-                  <View style={styles.slotCountBadge}>
-                    <Text style={styles.slotCountText}>{daySlots.length}</Text>
-                  </View>
-                )}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <CalendarIcon size={20} color="#0A7AFF" />
+            <Text style={styles.sectionTitle}>Días de la semana</Text>
+          </View>
+          <View style={styles.sectionContent}>
+            {DAYS.map((day) => (
+              <View key={day.key} style={styles.dayItem}>
+                <Text style={styles.dayLabel}>{day.label}</Text>
+                <Switch
+                  value={workingDays[day.key]}
+                  onValueChange={() => toggleDay(day.key)}
+                  trackColor={{ false: '#E5E5EA', true: '#0A7AFF' }}
+                  thumbColor="#FFFFFF"
+                />
               </View>
-              <View style={styles.timeSlots}>
-                {TIME_SLOTS.map((time) => {
-                  const selected = isSlotSelected(dayIndex, time);
-                  return (
-                    <TouchableOpacity
-                      key={time}
-                      style={[
-                        styles.timeSlot,
-                        selected && styles.timeSlotSelected,
-                      ]}
-                      onPress={() => toggleTimeSlot(dayIndex, time)}>
-                      <Text
-                        style={[
-                          styles.timeSlotText,
-                          selected && styles.timeSlotTextSelected,
-                        ]}>
-                        {time}
-                      </Text>
-                      {selected && <Check size={16} color="#FFFFFF" />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Clock size={20} color="#0A7AFF" />
+            <Text style={styles.sectionTitle}>Horario general</Text>
+          </View>
+          <View style={styles.sectionContent}>
+            <View style={styles.timeInputContainer}>
+              <Text style={styles.timeLabel}>Hora de inicio</Text>
+              <TextInput
+                style={styles.timeInput}
+                value={startTime}
+                onChangeText={setStartTime}
+                placeholder="HH:MM"
+                placeholderTextColor="#8E8E93"
+              />
             </View>
-          );
-        })}
+            <View style={styles.timeInputContainer}>
+              <Text style={styles.timeLabel}>Hora de término</Text>
+              <TextInput
+                style={styles.timeInput}
+                value={endTime}
+                onChangeText={setEndTime}
+                placeholder="HH:MM"
+                placeholderTextColor="#8E8E93"
+              />
+            </View>
+          </View>
+        </View>
 
         <View style={styles.footer}>
           <Button
-            title="Guardar Horarios"
+            title="Guardar disponibilidad"
             onPress={handleSave}
-            loading={isSaving}
             style={styles.saveButton}
           />
         </View>
@@ -301,107 +224,118 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  instructionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  section: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 20,
-    marginBottom: 16,
-    padding: 16,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
+    overflow: 'hidden',
   },
-  instructionText: {
-    flex: 1,
-    marginLeft: 16,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#F8F9FA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
   },
-  instructionTitle: {
+  sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1C1C1E',
-    marginBottom: 4,
+    marginLeft: 12,
   },
-  instructionSubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-    lineHeight: 20,
+  sectionContent: {
+    padding: 16,
   },
-  daySection: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  dayHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dayTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1C1C1E',
-  },
-  slotCountBadge: {
-    backgroundColor: '#0A7AFF20',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  slotCountText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0A7AFF',
-  },
-  timeSlots: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  timeSlot: {
+  spotItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 16,
     backgroundColor: '#F2F2F7',
-    gap: 6,
+    borderRadius: 12,
+    marginBottom: 8,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  timeSlotSelected: {
+  spotItemSelected: {
+    backgroundColor: '#E3F2FF',
+    borderColor: '#0A7AFF',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#C7C7CC',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
     backgroundColor: '#0A7AFF',
     borderColor: '#0A7AFF',
-    shadowColor: '#0A7AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
-  timeSlotText: {
-    fontSize: 15,
+  checkboxInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  spotText: {
+    fontSize: 16,
+    color: '#1C1C1E',
+    marginLeft: 12,
+    fontWeight: '500',
+  },
+  spotTextSelected: {
+    color: '#0A7AFF',
+    fontWeight: '600',
+  },
+  dayItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  dayLabel: {
+    fontSize: 16,
+    color: '#1C1C1E',
+    fontWeight: '500',
+  },
+  timeInputContainer: {
+    marginBottom: 16,
+  },
+  timeLabel: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#1C1C1E',
+    marginBottom: 8,
   },
-  timeSlotTextSelected: {
-    color: '#FFFFFF',
+  timeInput: {
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#1C1C1E',
+    fontWeight: '500',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   footer: {
     padding: 16,
-    marginTop: 8,
+    marginTop: 24,
+    marginBottom: 32,
   },
   saveButton: {
     marginBottom: 20,
