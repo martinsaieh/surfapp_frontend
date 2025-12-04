@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   CheckCircle,
   XCircle,
@@ -16,6 +17,7 @@ import {
   MapPin,
   Calendar,
   User,
+  ClipboardList,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -185,32 +187,40 @@ export default function RequestsScreen() {
     <View style={styles.requestCard}>
       <View style={styles.requestHeader}>
         <View style={styles.surferInfo}>
-          <User size={20} color="#007AFF" />
-          <Text style={styles.surferName}>{item.surfer_name}</Text>
-        </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status) + '20' },
-          ]}>
-          <Text
-            style={[
-              styles.statusText,
-              { color: getStatusColor(item.status) },
-            ]}>
-            {getStatusText(item.status)}
-          </Text>
+          <View style={styles.avatarCircle}>
+            <User size={20} color="#0A7AFF" />
+          </View>
+          <View style={styles.surferDetails}>
+            <Text style={styles.surferName}>{item.surfer_name}</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(item.status) + '20' },
+              ]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: getStatusColor(item.status) },
+                ]}>
+                {getStatusText(item.status)}
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      <View style={styles.requestDetails}>
+      <View style={styles.detailsCard}>
         <View style={styles.detailRow}>
-          <MapPin size={16} color="#8E8E93" />
+          <View style={styles.iconCircle}>
+            <MapPin size={16} color="#0A7AFF" />
+          </View>
           <Text style={styles.detailText}>{item.spot}</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Calendar size={16} color="#8E8E93" />
+          <View style={styles.iconCircle}>
+            <Calendar size={16} color="#0A7AFF" />
+          </View>
           <Text style={styles.detailText}>
             {new Date(item.date).toLocaleDateString('es-ES', {
               day: 'numeric',
@@ -221,7 +231,9 @@ export default function RequestsScreen() {
         </View>
 
         <View style={styles.detailRow}>
-          <Clock size={16} color="#8E8E93" />
+          <View style={styles.iconCircle}>
+            <Clock size={16} color="#0A7AFF" />
+          </View>
           <Text style={styles.detailText}>
             {item.time} ({item.duration_hours}h)
           </Text>
@@ -230,7 +242,7 @@ export default function RequestsScreen() {
 
       {item.notes && (
         <View style={styles.notesContainer}>
-          <Text style={styles.notesLabel}>Notas:</Text>
+          <Text style={styles.notesLabel}>Notas del cliente</Text>
           <Text style={styles.notesText}>{item.notes}</Text>
         </View>
       )}
@@ -258,28 +270,46 @@ export default function RequestsScreen() {
     return <LoadingSpinner message="Cargando solicitudes..." />;
   }
 
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Solicitudes</Text>
-      </View>
+      <LinearGradient
+        colors={['#0A7AFF', '#00C6FB']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <ClipboardList size={32} color="#FFFFFF" />
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>Solicitudes</Text>
+              <Text style={styles.headerSubtitle}>
+                {pendingCount > 0
+                  ? `${pendingCount} ${pendingCount === 1 ? 'pendiente' : 'pendientes'}`
+                  : 'Todo al día'}
+              </Text>
+            </View>
+          </View>
+        </View>
 
-      <View style={styles.filterContainer}>
-        {['all', 'pending', 'confirmed'].map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterButton, filter === f && styles.filterActive]}
-            onPress={() => setFilter(f as any)}>
-            <Text
-              style={[
-                styles.filterText,
-                filter === f && styles.filterTextActive,
-              ]}>
-              {f === 'all' ? 'Todas' : f === 'pending' ? 'Pendientes' : 'Confirmadas'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        <View style={styles.filterContainer}>
+          {['all', 'pending', 'confirmed'].map((f) => (
+            <TouchableOpacity
+              key={f}
+              style={[styles.filterButton, filter === f && styles.filterActive]}
+              onPress={() => setFilter(f as any)}>
+              <Text
+                style={[
+                  styles.filterText,
+                  filter === f && styles.filterTextActive,
+                ]}>
+                {f === 'all' ? 'Todas' : f === 'pending' ? 'Pendientes' : 'Confirmadas'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </LinearGradient>
 
       {error && <ErrorMessage message={error} onRetry={loadRequests} />}
 
@@ -310,106 +340,164 @@ export default function RequestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  headerGradient: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    marginLeft: 16,
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#1C1C1E',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginTop: 4,
+    fontWeight: '500',
   },
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
     gap: 8,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   filterActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FFFFFF',
   },
   filterText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: '#FFFFFF',
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: '#0A7AFF',
   },
   list: {
     padding: 16,
+    paddingTop: 20,
   },
   requestCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   requestHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   surferInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#0A7AFF20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  surferDetails: {
+    marginLeft: 12,
+    flex: 1,
   },
   surferName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1C1C1E',
+    marginBottom: 6,
   },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   statusText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
-  requestDetails: {
-    gap: 8,
+  detailsCard: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
+    gap: 12,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   detailText: {
     fontSize: 15,
-    color: '#3C3C43',
+    color: '#1C1C1E',
+    fontWeight: '500',
+    flex: 1,
   },
   notesContainer: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: '#FFF9F0',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFB800',
   },
   notesLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#8E8E93',
-    marginBottom: 4,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   notesText: {
     fontSize: 15,
-    color: '#3C3C43',
+    color: '#1C1C1E',
+    lineHeight: 22,
   },
   actions: {
     flexDirection: 'row',
@@ -420,35 +508,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
   },
   rejectButton: {
-    backgroundColor: '#FF3B3010',
+    backgroundColor: '#FF3B3015',
+    borderWidth: 1,
+    borderColor: '#FF3B3030',
   },
   confirmButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0A7AFF',
+    shadowColor: '#0A7AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   rejectText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#FF3B30',
   },
   confirmText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
   emptyText: {
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+    fontWeight: '500',
   },
 });

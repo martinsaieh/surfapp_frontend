@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { Clock, Check, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Clock, Check, Calendar as CalendarIcon } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -170,46 +171,79 @@ export default function ScheduleScreen() {
     return <LoadingSpinner message="Cargando horarios..." />;
   }
 
+  const totalSlots = Object.values(schedules).reduce((sum, day) => sum + day.length, 0);
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Horarios Disponibles</Text>
-        <Text style={styles.headerSubtitle}>
-          Selecciona los horarios en los que estás disponible
-        </Text>
-      </View>
+      <LinearGradient
+        colors={['#0A7AFF', '#00C6FB']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <CalendarIcon size={32} color="#FFFFFF" />
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>Disponibilidad</Text>
+              <Text style={styles.headerSubtitle}>
+                {totalSlots} {totalSlots === 1 ? 'horario' : 'horarios'} configurados
+              </Text>
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
 
       {error && <ErrorMessage message={error} onRetry={loadSchedules} />}
 
       <ScrollView style={styles.content}>
-        {DAYS.map((day, dayIndex) => (
-          <View key={dayIndex} style={styles.daySection}>
-            <Text style={styles.dayTitle}>{day}</Text>
-            <View style={styles.timeSlots}>
-              {TIME_SLOTS.map((time) => {
-                const selected = isSlotSelected(dayIndex, time);
-                return (
-                  <TouchableOpacity
-                    key={time}
-                    style={[
-                      styles.timeSlot,
-                      selected && styles.timeSlotSelected,
-                    ]}
-                    onPress={() => toggleTimeSlot(dayIndex, time)}>
-                    <Text
-                      style={[
-                        styles.timeSlotText,
-                        selected && styles.timeSlotTextSelected,
-                      ]}>
-                      {time}
-                    </Text>
-                    {selected && <Check size={16} color="#FFFFFF" />}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        <View style={styles.instructionCard}>
+          <Clock size={24} color="#0A7AFF" />
+          <View style={styles.instructionText}>
+            <Text style={styles.instructionTitle}>Selecciona tus horarios</Text>
+            <Text style={styles.instructionSubtitle}>
+              Toca para activar/desactivar los horarios en los que estás disponible
+            </Text>
           </View>
-        ))}
+        </View>
+
+        {DAYS.map((day, dayIndex) => {
+          const daySlots = schedules[`${dayIndex}`] || [];
+          return (
+            <View key={dayIndex} style={styles.daySection}>
+              <View style={styles.dayHeader}>
+                <Text style={styles.dayTitle}>{day}</Text>
+                {daySlots.length > 0 && (
+                  <View style={styles.slotCountBadge}>
+                    <Text style={styles.slotCountText}>{daySlots.length}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.timeSlots}>
+                {TIME_SLOTS.map((time) => {
+                  const selected = isSlotSelected(dayIndex, time);
+                  return (
+                    <TouchableOpacity
+                      key={time}
+                      style={[
+                        styles.timeSlot,
+                        selected && styles.timeSlotSelected,
+                      ]}
+                      onPress={() => toggleTimeSlot(dayIndex, time)}>
+                      <Text
+                        style={[
+                          styles.timeSlotText,
+                          selected && styles.timeSlotTextSelected,
+                        ]}>
+                        {time}
+                      </Text>
+                      {selected && <Check size={16} color="#FFFFFF" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
 
         <View style={styles.footer}>
           <Button
@@ -227,39 +261,110 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  headerGradient: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    marginLeft: 16,
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#1C1C1E',
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: '#8E8E93',
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginTop: 4,
+    fontWeight: '500',
   },
   content: {
     flex: 1,
   },
+  instructionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  instructionText: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  instructionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1C1C1E',
+    marginBottom: 4,
+  },
+  instructionSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    lineHeight: 20,
+  },
   daySection: {
     backgroundColor: '#FFFFFF',
-    marginVertical: 8,
+    marginHorizontal: 16,
+    marginBottom: 12,
     paddingVertical: 16,
     paddingHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  dayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   dayTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1C1C1E',
-    marginBottom: 12,
+  },
+  slotCountBadge: {
+    backgroundColor: '#0A7AFF20',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  slotCountText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0A7AFF',
   },
   timeSlots: {
     flexDirection: 'row',
@@ -270,13 +375,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
     backgroundColor: '#F2F2F7',
     gap: 6,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   timeSlotSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0A7AFF',
+    borderColor: '#0A7AFF',
+    shadowColor: '#0A7AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   timeSlotText: {
     fontSize: 15,
@@ -288,6 +401,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 16,
+    marginTop: 8,
   },
   saveButton: {
     marginBottom: 20,

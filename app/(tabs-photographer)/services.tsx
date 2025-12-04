@@ -11,7 +11,8 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { Plus, Edit2, Trash2, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Plus, Edit2, Trash2, X, Package } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -171,7 +172,14 @@ export default function ServicesScreen() {
   const renderService = ({ item }: { item: Service }) => (
     <View style={styles.serviceCard}>
       <View style={styles.serviceHeader}>
-        <Text style={styles.serviceName}>{item.name}</Text>
+        <View style={styles.serviceHeaderLeft}>
+          <Text style={styles.serviceName}>{item.name}</Text>
+          {item.is_active && (
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>Activo</Text>
+            </View>
+          )}
+        </View>
         <View style={styles.serviceActions}>
           <TouchableOpacity
             style={styles.iconButton}
@@ -191,18 +199,25 @@ export default function ServicesScreen() {
       )}
 
       <View style={styles.serviceDetails}>
-        <Text style={styles.servicePrice}>
-          {item.currency} {item.price.toFixed(2)}
-        </Text>
-        <Text style={styles.serviceDuration}>{item.duration_hours}h</Text>
+        <View style={styles.priceContainer}>
+          <Text style={styles.servicePrice}>
+            ${item.price.toFixed(2)}
+          </Text>
+          <Text style={styles.currency}>{item.currency}</Text>
+        </View>
+        <View style={styles.durationContainer}>
+          <Text style={styles.serviceDuration}>{item.duration_hours} horas</Text>
+        </View>
       </View>
 
       {item.features && item.features.length > 0 && (
         <View style={styles.featuresContainer}>
+          <Text style={styles.featuresTitle}>Incluye:</Text>
           {item.features.map((feature, index) => (
-            <Text key={index} style={styles.featureItem}>
-              • {feature}
-            </Text>
+            <View key={index} style={styles.featureItem}>
+              <View style={styles.featureDot} />
+              <Text style={styles.featureText}>{feature}</Text>
+            </View>
           ))}
         </View>
       )}
@@ -215,12 +230,26 @@ export default function ServicesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mis Servicios</Text>
-        <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-          <Plus size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+      <LinearGradient
+        colors={['#0A7AFF', '#00C6FB']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Package size={32} color="#FFFFFF" />
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>Mis Servicios</Text>
+              <Text style={styles.headerSubtitle}>
+                {services.length} {services.length === 1 ? 'servicio' : 'servicios'}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
+            <Plus size={24} color="#0A7AFF" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
       {error && <ErrorMessage message={error} onRetry={loadServices} />}
 
@@ -231,6 +260,7 @@ export default function ServicesScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            <Package size={64} color="#E5E5EA" />
             <Text style={styles.emptyText}>
               No tienes servicios creados aún
             </Text>
@@ -334,105 +364,205 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
+  },
+  headerGradient: {
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerText: {
+    marginLeft: 16,
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#1C1C1E',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginTop: 4,
+    fontWeight: '500',
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#007AFF',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   list: {
     padding: 16,
+    paddingTop: 20,
   },
   serviceCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   serviceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  serviceHeaderLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   serviceName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     color: '#1C1C1E',
-    flex: 1,
+  },
+  activeBadge: {
+    backgroundColor: '#34C75920',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  activeBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#34C759',
   },
   serviceActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   iconButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
   },
   serviceDescription: {
     fontSize: 15,
     color: '#8E8E93',
-    marginBottom: 12,
+    marginBottom: 16,
+    lineHeight: 22,
   },
   serviceDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
   },
   servicePrice: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#007AFF',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#0A7AFF',
+  },
+  currency: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  durationContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   serviceDuration: {
-    fontSize: 16,
-    color: '#8E8E93',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1C1C1E',
   },
   featuresContainer: {
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
-    paddingTop: 12,
+    borderTopColor: '#F2F2F7',
+    paddingTop: 16,
+  },
+  featuresTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8E8E93',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   featureItem: {
-    fontSize: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  featureDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#0A7AFF',
+    marginRight: 12,
+  },
+  featureText: {
+    fontSize: 15,
     color: '#3C3C43',
-    marginBottom: 4,
+    flex: 1,
+    lineHeight: 20,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
   emptyText: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1C1C1E',
+    marginTop: 24,
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+    lineHeight: 24,
   },
   modalOverlay: {
     flex: 1,
